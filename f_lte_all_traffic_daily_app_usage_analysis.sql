@@ -220,3 +220,202 @@ AND b.app_class = c.app_sub_class_id
 group by (b.msisdn,c.app_class_name,c.app_sub_class_name)
 )d
 ;
+
+
+select SUM(b.up_flow) as up_flow, SUM(b.down_flow) as down_flow, c.app_class_name, c.app_sub_class_name FROM 
+(select * from edc_wg.f_lte_all_traffic_daily where date_id = 20180523 and msisdn = 92049388) b
+LEFT JOIN
+(SELECT distinct app_class_id, app_class_name, app_sub_class_id, app_sub_class_name
+ FROM edc_wg.d_app_all)c
+ON b.app_class_top = c.app_class_id
+AND b.app_class = c.app_sub_class_id
+group by (c.app_class_name,c.app_sub_class_name)
+order by down_flow desc;
+
+
+select * FROM 
+(select * from edc_wg.f_lte_all_traffic_daily where date_id = 20180523 and msisdn = 92049388) b
+LEFT JOIN
+(SELECT distinct app_class_id, app_class_name, app_sub_class_id, app_sub_class_name
+ FROM edc_wg.d_app_all)c
+ON b.app_class_top = c.app_class_id
+AND b.app_class = c.app_sub_class_id
+order by down_flow desc;
+
+select d.up_flow, d.down_flow, (d.up_flow+d.down_flow) as flow, d.app_class_name, d.app_sub_class_name
+from
+(select SUM(b.up_flow) as up_flow, SUM(b.down_flow) as down_flow, c.app_class_name, c.app_sub_class_name FROM 
+(select * from edc_wg.f_lte_all_traffic_daily where date_id >= 20180809 and date_id <= 20180809 and msisdn = 92049388) b
+LEFT JOIN
+(SELECT distinct app_class_id, app_class_name, app_sub_class_id, app_sub_class_name
+ FROM edc_wg.d_app_all)c
+ON b.app_class_top = c.app_class_id
+AND b.app_class = c.app_sub_class_id
+group by (c.app_class_name,c.app_sub_class_name)
+)d
+order by flow desc;
+
+
+select d.up_flow, d.down_flow, (d.up_flow+d.down_flow) as flow
+from
+(select SUM(b.up_flow) as up_flow, SUM(b.down_flow) as down_flow FROM 
+(select * from edc_wg.f_lte_all_traffic_daily where date_id >= 20180519 and date_id <= 20180525 and msisdn = 92049388) b
+)d
+
+
+select d.msisdn, d.app_class_name,d.app_sub_class_name,d.frequency
+from
+(select b.msisdn, c.app_class_name, c.app_sub_class_name,count(*) as frequency FROM 
+(select * from edc_wg.f_lte_all_traffic_daily where date_id >= 20180809 and date_id <= 20180809 and msisdn = 92049388) b
+LEFT JOIN
+(SELECT distinct app_class_id, app_class_name, app_sub_class_id, app_sub_class_name
+ FROM edc_wg.d_app_all)c
+ON b.app_class_top = c.app_class_id
+AND b.app_class = c.app_sub_class_id
+group by (b.msisdn,c.app_class_name,c.app_sub_class_name)
+)d
+order by frequency desc;
+
+
+select * INTO user_app_top_10_0809 from
+(select imsi,msisdn,app_class_name, app_sub_class_name,flow, rank() OVER (PARTITION BY imsi,msisdn ORDER BY flow Desc) as ranking from
+(select imsi,msisdn, d.app_class_name, d.app_sub_class_name,(d.up_flow+d.down_flow) as flow
+from
+(select b.imsi,b.msisdn,SUM(b.up_flow) as up_flow, SUM(b.down_flow) as down_flow, c.app_class_name, c.app_sub_class_name FROM 
+(select * from edc_wg.f_lte_all_traffic_daily where date_id >= 20180809 and date_id <= 20180809) b
+LEFT JOIN
+(SELECT distinct app_class_id, app_class_name, app_sub_class_id, app_sub_class_name
+ FROM edc_wg.d_app_all)c
+ON b.app_class_top = c.app_class_id
+AND b.app_class = c.app_sub_class_id
+group by (b.imsi,b.msisdn,c.app_class_name,c.app_sub_class_name)
+)d
+)g
+)h
+where ranking<=10
+;
+
+
+
+select app_class_name, app_sub_class_name,flow from
+(select d.app_class_name, d.app_sub_class_name,(d.up_flow+d.down_flow) as flow
+from
+(select SUM(b.up_flow) as up_flow, SUM(b.down_flow) as down_flow, c.app_class_name, c.app_sub_class_name FROM 
+(select * from edc_wg.f_lte_all_traffic_daily where date_id >= 20180809 and date_id <= 20180809) b
+LEFT JOIN
+(SELECT distinct app_class_id, app_class_name, app_sub_class_id, app_sub_class_name
+ FROM edc_wg.d_app_all)c
+ON b.app_class_top = c.app_class_id
+AND b.app_class = c.app_sub_class_id
+group by (c.app_class_name,c.app_sub_class_name)
+)d
+)g
+order by flow desc
+limit 10
+;
+
+select * INTO total_app_0809 from(
+select app_class_name, app_sub_class_name,flow from
+(select d.app_class_name, d.app_sub_class_name,(d.up_flow+d.down_flow) as flow
+from
+(select SUM(b.up_flow) as up_flow, SUM(b.down_flow) as down_flow, c.app_class_name, c.app_sub_class_name FROM 
+(select * from edc_wg.f_lte_all_traffic_daily where date_id >= 20180809 and date_id <= 20180809) b
+LEFT JOIN
+(SELECT distinct app_class_id, app_class_name, app_sub_class_id, app_sub_class_name
+ FROM edc_wg.d_app_all)c
+ON b.app_class_top = c.app_class_id
+AND b.app_class = c.app_sub_class_id
+group by (c.app_class_name,c.app_sub_class_name)
+)d
+)g
+order by flow desc
+)h
+;
+
+
+
+SELECT app_class_name, app_sub_class_name, CAST(flow/1024/1024/1024 AS INT)as flow
+  FROM edc_wg.total_app_0809
+  order by flow desc;
+
+
+
+
+select app_class_name, app_sub_class_name,flow from
+(select d.app_class_name, d.app_sub_class_name,(d.up_flow+d.down_flow) as flow
+from
+
+select d.app_class_name,d.app_sub_class_name, count(d.msisdn) as user_num from
+(
+	select distinct c.app_class_name, c.app_sub_class_name, b.msisdn FROM 
+(
+	select * from edc_wg.f_lte_all_traffic_daily where date_id >= 20180809 and date_id <= 20180809) b
+LEFT JOIN
+(
+	SELECT distinct app_class_id, app_class_name, app_sub_class_id, app_sub_class_name
+ FROM edc_wg.d_app_all)c
+ON b.app_class_top = c.app_class_id
+AND b.app_class = c.app_sub_class_id
+)d
+group by (d.app_class_name,d.app_sub_class_name)
+order by user_num desc
+limit 10;
+
+
+)g
+order by flow desc
+
+;
+
+
+SELECT a.app_class_name, a.app_sub_class_name,a.flow,(a.flow/b.user_num) as average_usage FROM edc_wg.total_app_0809 a, edc_wg.app_user_num_0809 b
+where a.app_class_name = b.app_class_name
+and a.app_sub_class_name = b.app_sub_class_name
+
+
+
+SELECT a.*,c.frequency,d.average
+FROM edc_wg.user_app_top_10_0809 a, edc_wg.app_class_average_0809 b,edc_wg.app_user_frequency_0809 c, edc_wg.app_average_frequency_0809 d
+WHERE a.app_class_name = b.app_class_name
+and b.app_class_name = c.app_class_name
+and c.app_class_name = d.app_class_name
+and a.app_sub_class_name = b.app_sub_class_name
+and b.app_sub_class_name = c.app_sub_class_name
+and c.app_sub_class_name = d.app_sub_class_name
+and 
+(a.flow >= b.average_usage
+or c.frequency >= d.average)
+
+
+select d.app_class_name,d.app_sub_class_name, count(d.msisdn) as user_num from
+(
+	select distinct c.app_class_name, c.app_sub_class_name, b.msisdn FROM 
+(
+	select * from edc_wg.f_lte_all_traffic_daily where date_id >= 20180809 and date_id <= 20180809) b
+LEFT JOIN
+(
+	SELECT distinct app_class_id, app_class_name, app_sub_class_id, app_sub_class_name
+ FROM edc_wg.d_app_all)c
+ON b.app_class_top = c.app_class_id
+AND b.app_class = c.app_sub_class_id
+)d
+group by (d.app_class_name,d.app_sub_class_name)
+order by user_num desc
+limit 10;
+
+
+
+select * from edc_wg.f_lte_all_traffic_daily where date_id >= 20180809 and date_id <= 20180809 
+LEFT JOIN
+(
+	SELECT distinct app_class_id, app_class_name, app_sub_class_id, app_sub_class_name
+ FROM edc_wg.d_app_all)c
+ON b.app_class_top = c.app_class_id
+AND b.app_class = c.app_sub_class_id
+
+
+
+select a.app_class_name,a.app_sub_class_name, (a.flow/b.user_num) as average_usage from total_app_0809 a,app_user_num_0809 b
+where a.app_class_name = b.app_class_name
+and a.app_sub_class_name b.app_sub_class_name
+limit 10
